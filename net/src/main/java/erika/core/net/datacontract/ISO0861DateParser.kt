@@ -1,5 +1,6 @@
 package erika.core.net.datacontract
 
+import android.os.Build
 import java.text.DateFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -11,6 +12,16 @@ object ISO0861DateParser {
     }
 
     private val local = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+    private val timeZoned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.US)
+    } else {
+        null
+    }
+    private val timeSecondZoned = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX", Locale.US)
+    } else {
+        null
+    }
 
     fun parse(input: String?): Date? {
         if (input.isNullOrEmpty()) {
@@ -18,6 +29,12 @@ object ISO0861DateParser {
         }
         if (input.contains('Z')) {
             return tryParse(input, utc)
+        }
+        if (input.contains('.') && timeSecondZoned != null) {
+            return tryParse(input, timeSecondZoned)
+        }
+        if (timeZoned != null) {
+            return tryParse(input, timeZoned) ?: tryParse(input, local)
         }
         return tryParse(input, local)
     }
