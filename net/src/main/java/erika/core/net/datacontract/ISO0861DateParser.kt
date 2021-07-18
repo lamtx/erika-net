@@ -31,7 +31,7 @@ object ISO0861DateParser {
             return tryParse(input, utc)
         }
         if (input.contains('.') && timeSecondZoned != null) {
-            return tryParse(input, timeSecondZoned)
+            return tryParse(input, timeSecondZoned) ?: tryParse(input, local)
         }
         if (timeZoned != null) {
             return tryParse(input, timeZoned) ?: tryParse(input, local)
