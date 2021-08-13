@@ -10,7 +10,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.net.URLConnection
 
 object NetClient {
     private const val tag = "NetClient"
@@ -204,6 +203,9 @@ object NetClient {
 
     private fun makeRequest(request: Request, uploadListener: CopyStreamListener?): String {
         val connection = makeConnection(request, uploadListener)
+        if (request.method == HttpMethod.HEAD) {
+            return ""
+        }
         return connection.inputStream.use {
             it.readString(connection.contentEncoding)
         }.also {
