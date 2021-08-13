@@ -14,7 +14,7 @@ import java.net.URLConnection
 
 object NetClient {
     private const val tag = "NetClient"
-    private val NoModifier: URLConnection.() -> Unit = {}
+    private val NoModifier: HttpURLConnection.() -> Unit = {}
 
     class Request(
         val url: String,
@@ -23,7 +23,7 @@ object NetClient {
         val params: String? = null,
         val headers: List<Pair<String, String>> = emptyList(),
         val credentials: Credentials? = null,
-        val modifier: URLConnection.() -> Unit = NoModifier
+        val modifier: HttpURLConnection.() -> Unit = NoModifier
     ) : NetworkService {
         val fullUrl: String
             get() {
