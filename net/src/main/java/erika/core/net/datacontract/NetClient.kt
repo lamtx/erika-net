@@ -10,19 +10,21 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.net.URLConnection
 
 object NetClient {
-
     private const val tag = "NetClient"
+    private val NoModifier: URLConnection.() -> Unit = {}
 
     class Request(
-            val url: String,
-            val method: HttpMethod,
-            val body: Body?,
-            val params: String?,
-            val headers: List<Pair<String, String>>,
-            val credentials: Credentials?
-    ) {
+        val url: String,
+        val method: HttpMethod = HttpMethod.GET,
+        val body: Body? = null,
+        val params: String? = null,
+        val headers: List<Pair<String, String>> = emptyList(),
+        val credentials: Credentials? = null,
+        val modifier: URLConnection.() -> Unit = NoModifier
+    ) : NetworkService {
         val fullUrl: String
             get() {
                 return if (params.isNullOrEmpty()) {
@@ -35,12 +37,32 @@ object NetClient {
                     }
                 }
             }
+
+        override suspend fun getString(listener: CopyStreamListener?): String {
+            return withContext(Dispatchers.IO) {
+                makeRequest(this@Request, listener)
+            }
+        }
+
+        override suspend fun download(file: File, listener: CopyStreamListener?) {
+            return withContext(Dispatchers.IO) {
+                val connection = makeConnection(this@Request, null)
+                val estimatedSize = connection.getHeaderField("Content-length")?.toLongOrNull()
+                    ?: -1
+                connection.inputStream.use { ins ->
+                    @Suppress("BlockingMethodInNonBlockingContext")
+                    FileOutputStream(file).use { out ->
+                        ins.copyTo(out, estimatedSize, listener)
+                    }
+                }
+            }
+        }
     }
 
     class Response(
-            val statusCode: Int,
-            val headers: List<Pair<String, String>>,
-            val body: String
+        val statusCode: Int,
+        val headers: List<Pair<String, String>>,
+        val body: String
     )
 
     class RequestBuilder(private val url: String) : NetworkService {
@@ -50,7 +72,7 @@ object NetClient {
         private val headers = mutableListOf<Pair<String, String>>()
         private var credentials: Credentials? = null
 
-        fun authorize(credentials: Credentials) = apply {
+        fun authorize(credentials: Credentials?) = apply {
             this.credentials = credentials
         }
 
@@ -96,44 +118,32 @@ object NetClient {
 
         fun build(): Request {
             return Request(
-                    url = url,
-                    method = method,
-                    body = body,
-                    params = params,
-                    headers = headers,
-                    credentials = credentials
+                url = url,
+                method = method,
+                body = body,
+                params = params,
+                headers = headers,
+                credentials = credentials
             )
         }
 
         override suspend fun getString(listener: CopyStreamListener?): String {
-            return withContext(Dispatchers.IO) {
-                makeRequest(build(), listener)
-            }
+            return build().getString(listener)
         }
 
         override suspend fun <T> get(parser: DataParser<T>, listener: CopyStreamListener?): T {
-            return withContext(Dispatchers.IO) {
-                parser.parseObject(makeRequest(build(), listener))
-            }
+            return build().get(parser, listener)
         }
 
-        override suspend fun <T> getList(parser: DataParser<T>, listener: CopyStreamListener?): List<T> {
-            return withContext(Dispatchers.IO) {
-                parser.parserList(makeRequest(build(), listener))
-            }
+        override suspend fun <T> getList(
+            parser: DataParser<T>,
+            listener: CopyStreamListener?
+        ): List<T> {
+            return build().getList(parser, listener)
         }
 
-        suspend fun download(file: File, listener: CopyStreamListener? = null) {
-            return withContext(Dispatchers.IO) {
-                val connection = makeConnection(build(), null)
-                val estimatedSize = connection.getHeaderField("Content-length")?.toLongOrNull()
-                        ?: -1
-                connection.inputStream.use { ins ->
-                    FileOutputStream(file).use { out ->
-                        ins.copyTo(out, estimatedSize, listener)
-                    }
-                }
-            }
+        override suspend fun download(file: File, listener: CopyStreamListener?) {
+            return build().download(file, listener)
         }
     }
 
@@ -144,6 +154,7 @@ object NetClient {
         connection.requestMethod = request.method.name
         connection.instanceFollowRedirects = true
         connection.setRequestProperty(HttpHeaders.ACCEPT_CHARSET, "utf-8")
+        request.modifier(connection)
         request.credentials?.prepareRequest(connection)
 
         for ((key, value) in request.headers) {
@@ -182,7 +193,7 @@ object NetClient {
                     }
                 }
             }
-            throw HttpStatusException(content, responseCode)
+            throw HttpStatusException(content, responseCode, connection.headerFields)
         }
         return connection
     }
@@ -196,9 +207,13 @@ object NetClient {
         }
     }
 
-    private fun writeContent(request: Request, connection: HttpURLConnection, uploadListener: CopyStreamListener? = null) {
+    private fun writeContent(
+        request: Request,
+        connection: HttpURLConnection,
+        uploadListener: CopyStreamListener? = null
+    ) {
         if (request.method == HttpMethod.HEAD || request.method == HttpMethod.DELETE ||
-                request.body == null || request.body.isEmpty || request.method === HttpMethod.GET
+            request.body == null || request.body.isEmpty || request.method === HttpMethod.GET
         ) {
             return
         }

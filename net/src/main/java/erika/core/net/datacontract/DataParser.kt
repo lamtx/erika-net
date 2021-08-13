@@ -10,7 +10,7 @@ fun <T> DataParser<T>.parseObject(string: String): T {
     return this(JsonHelper(string))
 }
 
-fun <T> DataParser<T>.parserList(string: String?): List<T> {
+fun <T> DataParser<T>.parseList(string: String?): List<T> {
     if (string.isNullOrEmpty()) {
         return emptyList()
     }

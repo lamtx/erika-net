@@ -3,7 +3,11 @@ package erika.core.net
 import java.net.HttpURLConnection
 import java.util.*
 
-class HttpStatusException(val content: String, val statusCode: Int) : Exception(String.format(Locale.US, "%d : %s", statusCode, content)) {
+class HttpStatusException(
+    val content: String,
+    val statusCode: Int,
+    val headers: Map<String, List<String>>,
+) : Exception(String.format(Locale.US, "%d : %s", statusCode, content)) {
 
     val isOk: Boolean
         get() = statusCode == HttpURLConnection.HTTP_OK
