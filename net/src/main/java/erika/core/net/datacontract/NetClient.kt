@@ -173,10 +173,14 @@ object NetClient {
         val responseCode = connection.responseCode
         log("Status: $responseCode")
         if (responseCode < 200 || responseCode >= 300) {
-            val contentStream = try {
-                connection.inputStream
-            } catch (e: IOException) {
-                connection.errorStream
+            val contentStream = if (request.method == HttpMethod.HEAD) {
+                null
+            } else {
+                try {
+                    connection.inputStream
+                } catch (e: IOException) {
+                    connection.errorStream
+                }
             }
 
             val content: String
