@@ -139,6 +139,7 @@ class ParameterBuilder(private val properties: JSONObject) {
                     result.put(k, it)
                 }
             }
+            return result
         }
         throw error("Unsupported Json type ${value.javaClass.name}")
     }
