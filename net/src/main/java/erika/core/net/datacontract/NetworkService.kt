@@ -15,4 +15,8 @@ interface NetworkService {
     }
 
     suspend fun download(file: File, listener: CopyStreamListener? = null)
+
+    suspend fun downloadAll(listener: CopyStreamListener? = null): ByteArray
+
+    suspend fun getHeaders(): Map<String, List<String>>
 }

@@ -56,13 +56,21 @@ object NetClient {
                 }
             }
         }
-    }
 
-    class Response(
-        val statusCode: Int,
-        val headers: List<Pair<String, String>>,
-        val body: String
-    )
+        override suspend fun downloadAll(listener: CopyStreamListener?): ByteArray {
+            return withContext(Dispatchers.IO) {
+                makeConnection(this@Request, null).inputStream.use { stream ->
+                    stream.readBytes()
+                }
+            }
+        }
+
+        override suspend fun getHeaders(): Map<String, List<String>> {
+            return withContext(Dispatchers.IO) {
+                makeConnection(this@Request, null).headerFields
+            }
+        }
+    }
 
     class RequestBuilder(private val url: String) : NetworkService {
         private var method = HttpMethod.GET
@@ -143,6 +151,14 @@ object NetClient {
 
         override suspend fun download(file: File, listener: CopyStreamListener?) {
             return build().download(file, listener)
+        }
+
+        override suspend fun downloadAll(listener: CopyStreamListener?): ByteArray {
+            return build().downloadAll(listener)
+        }
+
+        override suspend fun getHeaders(): Map<String, List<String>> {
+            return build().getHeaders()
         }
     }
 
