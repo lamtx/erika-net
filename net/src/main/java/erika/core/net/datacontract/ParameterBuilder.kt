@@ -5,49 +5,47 @@ import org.json.JSONObject
 import java.util.*
 
 @ParameterMarker
-class ParameterBuilder(private val properties: JSONObject) {
-
-    constructor() : this(JSONObject())
+class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
 
     fun string(s: String?) = EmptyString(s)
 
-    infix fun String.x(value: Null) {
+    infix fun String.set(value: Null) {
         properties.put(this, JSONObject.NULL)
     }
 
-    infix fun String.x(value: EmptyString) {
+    infix fun String.set(value: EmptyString) {
         properties.put(this, value.value)
     }
 
-    infix fun String.x(value: Date?) {
+    infix fun String.set(value: Date?) {
         if (value != null) {
             properties.put(this, ISO0861DateParser.format(value))
         }
     }
 
-    infix fun String.x(value: CharSequence?) {
+    infix fun String.set(value: CharSequence?) {
         if (!value.isNullOrEmpty()) {
             properties.put(this, value)
         }
     }
 
-    infix fun String.x(value: Int) {
+    infix fun String.set(value: Int) {
         properties.put(this, value)
     }
 
-    infix fun String.x(value: Double) {
+    infix fun String.set(value: Double) {
         properties.put(this, value)
     }
 
-    infix fun String.x(value: Long) {
+    infix fun String.set(value: Long) {
         properties.put(this, value)
     }
 
-    infix fun String.x(value: Boolean) {
+    infix fun String.set(value: Boolean) {
         properties.put(this, value)
     }
 
-    infix fun String.x(value: Number?) {
+    infix fun String.set(value: Number?) {
         when {
             value is Int -> properties.put(this, value)
             value is Long -> properties.put(this, value)
@@ -58,12 +56,11 @@ class ParameterBuilder(private val properties: JSONObject) {
         }
     }
 
-    inline infix fun String.x(block: ParameterCreator) {
-        val child = ParameterBuilder()
-        block(child)
+    inline infix fun String.set(block: ParameterCreator) {
+        block(ParameterBuilder())
     }
 
-    infix fun String.x(values: Map<String, Any>?) {
+    infix fun String.set(values: Map<String, Any>?) {
         if (values != null) {
             val json = JSONObject()
             for ((key, value) in values) {
@@ -75,24 +72,14 @@ class ParameterBuilder(private val properties: JSONObject) {
         }
     }
 
-    infix fun String.x(value: Parameter?) {
+    infix fun String.set(value: Parameter?) {
         if (value != null) {
             val json = value.toJson()
             properties.put(this, json)
         }
     }
 
-    private fun Iterable<*>.isEmpty(): Boolean {
-        return if (this is Collection<*>) {
-            isEmpty()
-        } else {
-            iterator().hasNext()
-        }
-    }
-
-    private fun Iterable<*>.isNotEmpty() = !isEmpty()
-
-    infix fun String.x(values: Iterable<*>?) {
+    infix fun String.set(values: Iterable<*>?) {
         if (values != null && values.isNotEmpty()) {
             val array = JSONArray()
             for (data in values) {
@@ -103,6 +90,123 @@ class ParameterBuilder(private val properties: JSONObject) {
             properties.put(this, array)
         }
     }
+
+    infix fun String.set(values: Array<*>?) {
+        this set values?.asList()
+    }
+
+    infix fun String.set(values: IntArray) {
+        val array = JSONArray()
+        for (data in values) {
+            array.put(data)
+        }
+        properties.put(this, array)
+    }
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: Null) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: EmptyString) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: Date?) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: CharSequence?) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: Int) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: Double) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: Long) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: Boolean) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: Number?) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    inline infix fun String.x(block: ParameterCreator) = set(block)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(values: Map<String, Any>?) = set(values)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(value: Parameter?) = set(value)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(values: Iterable<*>?) = set(values)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(values: Array<*>?) = set(values)
+
+    @Deprecated(
+        message = "Use `set` instead.",
+        replaceWith = ReplaceWith("set")
+    )
+    @Suppress("NOTHING_TO_INLINE")
+    infix fun String.x(values: IntArray) = set(values)
 
     private fun test(value: Any?): Any? {
         if (value == null || value == JSONObject.NULL || value is JSONObject || value is JSONArray || value is String || value is Number) {
@@ -141,19 +245,7 @@ class ParameterBuilder(private val properties: JSONObject) {
             }
             return result
         }
-        throw error("Unsupported Json type ${value.javaClass.name}")
-    }
-
-    infix fun String.x(values: Array<*>?) {
-        this x values?.asList()
-    }
-
-    infix fun String.x(values: IntArray) {
-        val array = JSONArray()
-        for (data in values) {
-            array.put(data)
-        }
-        properties.put(this, array)
+        error("Unsupported Json type ${value.javaClass.name}")
     }
 
     @PublishedApi
@@ -164,4 +256,16 @@ class ParameterBuilder(private val properties: JSONObject) {
     object Null
 
     class EmptyString(val value: String?)
+
+    companion object {
+        private fun Iterable<*>.isEmpty(): Boolean {
+            return if (this is Collection<*>) {
+                isEmpty()
+            } else {
+                iterator().hasNext()
+            }
+        }
+
+        private fun Iterable<*>.isNotEmpty() = !isEmpty()
+    }
 }

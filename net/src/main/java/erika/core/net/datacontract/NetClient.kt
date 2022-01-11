@@ -4,10 +4,7 @@ import android.util.Log
 import erika.core.net.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.DataOutputStream
-import java.io.File
-import java.io.FileOutputStream
-import java.io.IOException
+import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -43,24 +40,13 @@ object NetClient {
             }
         }
 
-        override suspend fun download(file: File, listener: CopyStreamListener?) {
+        override suspend fun downloadTo(outputStream: OutputStream, listener: CopyStreamListener?) {
             return withContext(Dispatchers.IO) {
                 val connection = makeConnection(this@Request, null)
                 val estimatedSize = connection.getHeaderField("Content-length")?.toLongOrNull()
                     ?: -1
                 connection.inputStream.use { ins ->
-                    @Suppress("BlockingMethodInNonBlockingContext")
-                    FileOutputStream(file).use { out ->
-                        ins.copyTo(out, estimatedSize, listener)
-                    }
-                }
-            }
-        }
-
-        override suspend fun downloadAll(listener: CopyStreamListener?): ByteArray {
-            return withContext(Dispatchers.IO) {
-                makeConnection(this@Request, null).inputStream.use { stream ->
-                    stream.readBytes()
+                    ins.copyTo(outputStream, estimatedSize, listener)
                 }
             }
         }
@@ -151,6 +137,10 @@ object NetClient {
 
         override suspend fun download(file: File, listener: CopyStreamListener?) {
             return build().download(file, listener)
+        }
+
+        override suspend fun downloadTo(outputStream: OutputStream, listener: CopyStreamListener?) {
+            return build().downloadTo(outputStream, listener)
         }
 
         override suspend fun downloadAll(listener: CopyStreamListener?): ByteArray {
