@@ -105,105 +105,105 @@ class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: Null) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: EmptyString) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: Date?) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: CharSequence?) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: Int) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: Double) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: Long) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: Boolean) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: Number?) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(block)")
     )
     @Suppress("NOTHING_TO_INLINE")
     inline infix fun String.x(block: ParameterCreator) = set(block)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(values)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(values: Map<String, Any>?) = set(values)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(value: Parameter?) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(values)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(values: Iterable<*>?) = set(values)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(values)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(values: Array<*>?) = set(values)
 
     @Deprecated(
         message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set")
+        replaceWith = ReplaceWith("set(values)")
     )
     @Suppress("NOTHING_TO_INLINE")
     infix fun String.x(values: IntArray) = set(values)
