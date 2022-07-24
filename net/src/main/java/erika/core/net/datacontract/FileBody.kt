@@ -1,26 +1,17 @@
 package erika.core.net.datacontract
 
-import android.webkit.MimeTypeMap
-import erika.core.net.MimeType
+import erika.core.net.ContentType
 import java.io.File
 import java.io.InputStream
 
-class FileBody(private val file: File, private val fileName: String? = null) : Body {
-    override val contentType: String
-        get() {
-            val extension = fileName?.substringAfterLast(".", "") ?: file.extension
-            val type = if (extension.isNotEmpty()) {
-                MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-            } else null
-            return type ?: MimeType.bin.contentType
-        }
+class FileBody(
+    private val file: File,
+    override val contentType: ContentType = file.getMimeType() ?: ContentType.Binary,
+) : Body {
 
     override fun getContent(): InputStream {
         return file.inputStream()
     }
-
-    override val isEmpty: Boolean
-        get() = false
 
     override fun length(): Long {
         val length = file.length()

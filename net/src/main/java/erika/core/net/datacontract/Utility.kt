@@ -1,9 +1,12 @@
 package erika.core.net.datacontract
 
+import android.webkit.MimeTypeMap
+import erika.core.net.ContentType
 import erika.core.net.CopyStreamListener
 import kotlinx.coroutines.CancellationException
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URLEncoder
@@ -48,8 +51,8 @@ fun JSONObject.toUrlEncoded(): String {
             throw RuntimeException("Content has object, can not be formatted at urlEncoded")
         }
         sb.append(URLEncoder.encode(key, "utf-8"))
-                .append("=")
-                .append(URLEncoder.encode(value.toString(), "utf-8"))
+            .append("=")
+            .append(URLEncoder.encode(value.toString(), "utf-8"))
 
     }
     return sb.toString()
@@ -60,3 +63,13 @@ fun JSONObject.toUrlEncodedBody() = UrlEncodedBody(toUrlEncoded())
 fun JSONObject.toJsonBody() = JsonBody(this)
 
 fun JSONArray.toJsonBody() = JsonBody(this)
+
+fun File.getMimeType(): ContentType? {
+    val ext = extension
+    return if (ext.isEmpty()) null else {
+        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+        if (mimeType == null) null else {
+            ContentType.parse(mimeType)
+        }
+    }
+}

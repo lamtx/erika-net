@@ -97,13 +97,13 @@ object HttpHeaders {
 
      * @see [Section 4.2 of RFC 7233](http://tools.ietf.org/html/rfc7233.section-4.2)
      */
-    const val CONTENT_RANGE = "Content-Range"
+    const val CONTENT_RANGE = "content-range"
     /**
      * The HTTP `Content-Type` header field name.
 
      * @see [Section 3.1.1.5 of RFC 7231](http://tools.ietf.org/html/rfc7231.section-3.1.1.5)
      */
-    const val CONTENT_TYPE = "Content-Type"
+    const val ContentType = "content-type"
     /**
      * The HTTP `Cookie` header field name.
 

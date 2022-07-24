@@ -1,11 +1,13 @@
 package erika.core.net.datacontract
 
+import erika.core.net.ContentType
 import java.io.InputStream
 
 interface Body {
-    val contentType: String
+    val contentType: ContentType
+
     fun getContent(): InputStream
-    val isEmpty: Boolean
+
     /**
      * Return length of body or -1 if unknown
      */

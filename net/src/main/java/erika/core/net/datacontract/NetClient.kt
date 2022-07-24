@@ -4,7 +4,10 @@ import android.util.Log
 import erika.core.net.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.*
+import java.io.DataOutputStream
+import java.io.File
+import java.io.IOException
+import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -225,7 +228,7 @@ object NetClient {
         uploadListener: CopyStreamListener? = null
     ) {
         if (request.method == HttpMethod.HEAD || request.method == HttpMethod.DELETE ||
-            request.body == null || request.body.isEmpty || request.method === HttpMethod.GET
+            request.body == null || request.method === HttpMethod.GET
         ) {
             return
         }
@@ -236,7 +239,7 @@ object NetClient {
         log("ContentType: $contentType")
 
         connection.doOutput = true
-        connection.setRequestProperty("Content-Type", contentType)
+        connection.setRequestProperty("Content-Type", contentType.mimeType)
         if (contentLength >= 0) {
             connection.setRequestProperty("Content-Length", contentLength.toString())
         }
