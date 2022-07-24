@@ -9,12 +9,7 @@ class FileBody(
     override val contentType: ContentType = file.getMimeType() ?: ContentType.Binary,
 ) : Body {
 
-    override fun getContent(): InputStream {
-        return file.inputStream()
-    }
+    override fun getContent(): InputStream = file.inputStream()
 
-    override fun length(): Long {
-        val length = file.length()
-        return if (length == 0L) -1 else length
-    }
+    override fun length() = file.length()
 }
