@@ -7,7 +7,7 @@ import java.io.InputStream
 import java.io.SequenceInputStream
 import java.util.*
 
-class MultiPart private constructor(
+class MultiPart internal constructor(
     private val children: List<Part>,
     override val contentType: ContentType,
     private val boundary: ByteArray,
@@ -40,19 +40,18 @@ class MultiPart private constructor(
         return size
     }
 
-    companion object {
-        fun MultiPart(
-            children: List<Part>,
-            contentType: ContentType = Related
-        ): MultiPart {
-            val boundary = UUID.randomUUID().toString()
-            return MultiPart(
-                children = children,
-                contentType = mergeContentType(contentType, mapOf("boundary" to boundary)),
-                boundary = "\r\n--$boundary\r\n".toByteArray(Charsets.US_ASCII),
-                boundaryEnd = "\r\n--$boundary--".toByteArray(Charsets.US_ASCII),
-            )
+    override fun toString(): String {
+        val sb = StringBuilder()
+        for (part in children) {
+            sb.append(boundary.toString(Charsets.US_ASCII))
+            sb.append(part.headers.toString(Charsets.US_ASCII))
+            sb.append(part.body.toString())
         }
+        sb.append(boundaryEnd.toString(Charsets.US_ASCII))
+        return sb.toString()
+    }
+
+    companion object {
 
         val Alternative: ContentType get() = ContentType("multipart", "alternative")
 
@@ -68,48 +67,48 @@ class MultiPart private constructor(
 
         val Related: ContentType get() = ContentType("multipart", "related")
 
-        private fun mergeContentType(
-            base: ContentType,
-            params: Map<String, String>
-        ): ContentType {
-            return ContentType(
-                primaryType = base.primaryType,
-                subType = base.subType,
-                charset = base.charset,
-                parameters = params,
-            )
-        }
     }
 
 }
 
-class Part private constructor(
+fun MultiPart(
+    children: List<Part>,
+    contentType: ContentType = MultiPart.Related
+): MultiPart {
+    val boundary = "--${UUID.randomUUID()}"
+    return MultiPart(
+        children = children,
+        contentType = contentType.copy(parameters = mapOf("boundary" to boundary)),
+        boundary = "\r\n--$boundary\r\n".toByteArray(Charsets.US_ASCII),
+        boundaryEnd = "\r\n--$boundary--".toByteArray(Charsets.US_ASCII),
+    )
+}
+
+class Part internal constructor(
     val body: Body,
     val headers: ByteArray,
-) {
-    companion object {
-        fun Part(body: Body, headers: Map<String, String> = emptyMap()): Part {
-            return Part(
-                body = body,
-                headers = encodeHeader(body, headers),
-            )
-        }
+)
 
-        private fun encodeHeader(body: Body, headers: Map<String, String>): ByteArray {
-            val sb = StringBuilder()
-            for ((key, value) in headers.entries) {
-                sb.writeHeader(key, value)
-            }
-            sb.writeHeader(HttpHeaders.ContentType, body.contentType.mimeType)
-            sb.append("\r\n");
-            return sb.toString().toByteArray(Charsets.US_ASCII)
-        }
-
-        private fun StringBuilder.writeHeader(header: String, value: String) {
-            append(header)
-            append(": ")
-            append(value)
-            append("\r\n");
-        }
+private fun encodeHeader(body: Body, headers: Map<String, String>): ByteArray {
+    val sb = StringBuilder()
+    for ((key, value) in headers.entries) {
+        sb.writeHeader(key, value)
     }
+    sb.writeHeader(HttpHeaders.ContentType, body.contentType.mimeType)
+    sb.append("\r\n")
+    return sb.toString().toByteArray(Charsets.US_ASCII)
+}
+
+private fun StringBuilder.writeHeader(header: String, value: String) {
+    append(header)
+    append(": ")
+    append(value)
+    append("\r\n")
+}
+
+fun Part(body: Body, headers: Map<String, String> = emptyMap()): Part {
+    return Part(
+        body = body,
+        headers = encodeHeader(body, headers),
+    )
 }

@@ -18,7 +18,15 @@ class StringBody(
     }
 
     override fun length() = rawData.size.toLong()
+
+    override fun toString() = String(
+        bytes = rawData,
+        charset = Charset.forName(contentType.charset ?: "utf-8")
+    )
 }
+
+@Suppress("FUNCTIONNAME")
+fun JsonBody(p: ParameterCreator) = p.toJsonBody()
 
 @Suppress("FUNCTIONNAME")
 fun JsonBody(content: String) = StringBody(content, ContentType.Json)

@@ -193,7 +193,7 @@ object HttpHeaders {
 
      * @see [Section 7.1.2 of RFC 7231](http://tools.ietf.org/html/rfc7231.section-7.1.2)
      */
-    const val LOCATION = "Location"
+    const val Location = "location"
     /**
      * The HTTP `Max-Forwards` header field name.
 
@@ -229,7 +229,7 @@ object HttpHeaders {
 
      * @see [Section 3.1 of RFC 7233](http://tools.ietf.org/html/rfc7233.section-3.1)
      */
-    const val RANGE = "Range"
+    const val Range = "range"
     /**
      * The HTTP `Referer` header field name.
 

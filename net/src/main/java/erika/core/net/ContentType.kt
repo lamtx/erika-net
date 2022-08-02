@@ -38,6 +38,12 @@ class ContentType private constructor(
             return sb.toString()
         }
 
+    fun copy(
+        primaryType: String = this.primaryType,
+        subType: String? = this.subType,
+        parameters: Map<String, String?> = this.parameters,
+    ): ContentType = ContentType(primaryType, subType, parameters)
+
     override fun toString() = mimeType
 
     companion object {

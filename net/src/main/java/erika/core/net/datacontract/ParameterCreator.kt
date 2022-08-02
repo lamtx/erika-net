@@ -4,7 +4,9 @@ import org.json.JSONObject
 
 typealias ParameterCreator = ParameterBuilder.() -> Unit
 
-fun ParameterCreator.toJson(): JSONObject {
+// False positive, still inline `this`
+@Suppress("NOTHING_TO_INLINE")
+inline fun ParameterCreator.toJson(): JSONObject {
     val parameterBuilder = ParameterBuilder()
     this(parameterBuilder)
     return parameterBuilder.toJson()

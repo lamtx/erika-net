@@ -30,6 +30,4 @@ interface NetworkService {
             downloadTo(out, listener)
         }
     }
-
-    suspend fun getHeaders(): Map<String, List<String>>
 }

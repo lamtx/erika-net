@@ -5,13 +5,9 @@ import org.json.JSONObject
 import java.util.*
 
 @ParameterMarker
-class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
-
-    fun string(s: String?) = EmptyString(s)
-
-    infix fun String.set(value: Null) {
-        properties.put(this, JSONObject.NULL)
-    }
+class ParameterBuilder(
+    private val properties: JSONObject = JSONObject()
+) {
 
     infix fun String.set(value: EmptyString) {
         properties.put(this, value.value)
@@ -46,13 +42,8 @@ class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
     }
 
     infix fun String.set(value: Number?) {
-        when {
-            value is Int -> properties.put(this, value)
-            value is Long -> properties.put(this, value)
-            value is Double -> properties.put(this, value)
-            value is Float -> properties.put(this, value)
-            value is Byte -> properties.put(this, value)
-            value != null -> properties.put(this, value)
+        if (value != null) {
+            properties.put(this, value)
         }
     }
 
@@ -60,7 +51,7 @@ class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
         block(ParameterBuilder())
     }
 
-    infix fun String.set(values: Map<String, Any>?) {
+    infix fun String.set(values: Map<String, Any?>?) {
         if (values != null) {
             val json = JSONObject()
             for ((key, value) in values) {
@@ -72,7 +63,7 @@ class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
         }
     }
 
-    infix fun String.set(value: Parameter?) {
+    infix fun String.set(value: JsonObject?) {
         if (value != null) {
             val json = value.toJson()
             properties.put(this, json)
@@ -103,19 +94,33 @@ class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
         properties.put(this, array)
     }
 
-    @Deprecated(
-        message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set(value)")
-    )
-    @Suppress("NOTHING_TO_INLINE")
-    infix fun String.x(value: Null) = set(value)
+    infix fun String.set(value: Required<*>?) {
+        if (value != null) {
+            if (value.value == null) {
+                properties.put(this, JSONObject.NULL)
+            } else {
+                properties.put(this, value.value)
+            }
+        }
+    }
 
-    @Deprecated(
-        message = "Use `set` instead.",
-        replaceWith = ReplaceWith("set(value)")
-    )
-    @Suppress("NOTHING_TO_INLINE")
-    infix fun String.x(value: EmptyString) = set(value)
+    fun merge(other: JsonObject) {
+        merge(other.toJson())
+    }
+
+    fun merge(other: JSONObject) {
+        for (key in other.keys()) {
+            properties.put(key, other.get(key))
+        }
+    }
+
+    fun merge(other: Map<String, Any?>) {
+        for ((key, value) in other) {
+            test(value)?.let {
+                properties.put(key, it)
+            }
+        }
+    }
 
     @Deprecated(
         message = "Use `set` instead.",
@@ -185,7 +190,7 @@ class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
         replaceWith = ReplaceWith("set(value)")
     )
     @Suppress("NOTHING_TO_INLINE")
-    infix fun String.x(value: Parameter?) = set(value)
+    infix fun String.x(value: JsonObject?) = set(value)
 
     @Deprecated(
         message = "Use `set` instead.",
@@ -212,40 +217,39 @@ class ParameterBuilder(private val properties: JSONObject = JSONObject()) {
         if (value == null || value == JSONObject.NULL || value is JSONObject || value is JSONArray || value is String || value is Number) {
             return value
         }
-        if (value is Parameter) {
-            return value.toJson()
-        }
-        if (value is Date) {
-            return ISO0861DateParser.format(value)
-        }
-        if (value is Iterable<*>) {
-            if (value.isEmpty()) {
-                return null
-            }
-            val array = JSONArray()
-            for (e in value) {
-                test(e)?.let {
-                    array.put(it)
+        when (value) {
+            is JsonObject -> return value.toJson()
+            is Date -> return ISO0861DateParser.format(value)
+            is Iterable<*> -> {
+                if (value.isEmpty()) {
+                    return null
                 }
-            }
-            return array
-        }
-        if (value is Map<*, *>) {
-            if (value.isEmpty()) {
-                return null
-            }
-            val result = JSONObject()
-            for ((k, v) in value) {
-                if (k !is String) {
-                    throw  error("Unsupported Json with name is not a String")
+                val array = JSONArray()
+                for (e in value) {
+                    test(e)?.let {
+                        array.put(it)
+                    }
                 }
-                test(v)?.let {
-                    result.put(k, it)
-                }
+                return array
             }
-            return result
+            is Map<*, *> -> {
+                if (value.isEmpty()) {
+                    return null
+                }
+                val result = JSONObject()
+                for ((k, v) in value) {
+                    if (k !is String) {
+                        error("Unsupported Json with name is not a String")
+                    }
+                    test(v)?.let {
+                        result.put(k, it)
+                    }
+                }
+                return result
+            }
+            is Null -> return JSONObject.NULL
+            else -> error("Unsupported Json type ${value.javaClass.name}")
         }
-        error("Unsupported Json type ${value.javaClass.name}")
     }
 
     @PublishedApi

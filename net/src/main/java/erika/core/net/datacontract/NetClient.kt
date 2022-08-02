@@ -1,11 +1,12 @@
 package erika.core.net.datacontract
 
 import android.util.Log
-import erika.core.net.*
+import erika.core.net.CopyStreamListener
+import erika.core.net.HttpMethod
+import erika.core.net.HttpStatusException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.DataOutputStream
-import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.net.HttpURLConnection
@@ -13,145 +14,36 @@ import java.net.URL
 
 object NetClient {
     private const val tag = "NetClient"
-    private val NoModifier: HttpURLConnection.() -> Unit = {}
-
-    class Request(
-        val url: String,
-        val method: HttpMethod = HttpMethod.GET,
-        val body: Body? = null,
-        val params: String? = null,
-        val headers: List<Pair<String, String>> = emptyList(),
-        val credentials: Credentials? = null,
-        val modifier: HttpURLConnection.() -> Unit = NoModifier
-    ) : NetworkService {
-        val fullUrl: String
-            get() {
-                return if (params.isNullOrEmpty()) {
-                    url
-                } else {
-                    if (url.contains('?')) {
-                        "$url&${params}"
-                    } else {
-                        "$url?${params}"
-                    }
-                }
-            }
-
-        override suspend fun getString(listener: CopyStreamListener?): String {
-            return withContext(Dispatchers.IO) {
-                makeRequest(this@Request, listener)
-            }
+    suspend fun getString(request: Request, listener: CopyStreamListener?): String {
+        return withContext(Dispatchers.IO) {
+            makeRequest(request, listener)
         }
+    }
 
-        override suspend fun downloadTo(outputStream: OutputStream, listener: CopyStreamListener?) {
-            return withContext(Dispatchers.IO) {
-                val connection = makeConnection(this@Request, null)
-                val estimatedSize = connection.getHeaderField("Content-length")?.toLongOrNull()
-                    ?: -1
-                connection.inputStream.use { ins ->
-                    ins.copyTo(outputStream, estimatedSize, listener)
-                }
-            }
-        }
-
-        override suspend fun getHeaders(): Map<String, List<String>> {
-            return withContext(Dispatchers.IO) {
-                makeConnection(this@Request, null).headerFields
+    suspend fun downloadTo(
+        request: Request,
+        outputStream: OutputStream,
+        listener: CopyStreamListener?
+    ) {
+        return withContext(Dispatchers.IO) {
+            val connection = makeConnection(request, null)
+            val estimatedSize = connection.getHeaderField("Content-length")?.toLongOrNull()
+                ?: -1
+            connection.inputStream.use { ins ->
+                ins.copyTo(outputStream, estimatedSize, listener)
             }
         }
     }
 
-    class RequestBuilder(private val url: String) : NetworkService {
-        private var method = HttpMethod.GET
-        private var body: Body? = null
-        private var params: String? = null
-        private val headers = mutableListOf<Pair<String, String>>()
-        private var credentials: Credentials? = null
-
-        fun authorize(credentials: Credentials?) = apply {
-            this.credentials = credentials
+    private fun makeRequest(request: Request, uploadListener: CopyStreamListener?): String {
+        val connection = makeConnection(request, uploadListener)
+        if (request.method == HttpMethod.Head) {
+            return ""
         }
-
-        fun body(body: Body?) = apply {
-            this.body = body
-        }
-
-        fun jsonBody(body: Parameter) = apply {
-            this.body = body.toJsonBody()
-        }
-
-        fun jsonBody(body: List<Parameter>) = apply {
-            this.body = body.toJsonBody()
-        }
-
-        fun urlEncodedBody(body: Parameter) = apply {
-            this.body = body.toUrlEncodedBody()
-        }
-
-        fun jsonBody(p: ParameterCreator) = apply {
-            this.body = p.toJsonBody()
-        }
-
-        fun urlEncodedBody(p: ParameterCreator) = apply {
-            this.body = p.toUrlEncodedBody()
-        }
-
-        fun params(params: String?) = apply {
-            this.params = params
-        }
-
-        fun params(p: ParameterCreator) = apply {
-            this.params = p.toJson().toUrlEncoded()
-        }
-
-        fun method(method: HttpMethod) = apply {
-            this.method = method
-        }
-
-        fun headers(h: HeaderBuilder.() -> Unit) = apply {
-            h(HeaderBuilder(headers))
-        }
-
-        fun build(): Request {
-            return Request(
-                url = url,
-                method = method,
-                body = body,
-                params = params,
-                headers = headers,
-                credentials = credentials
-            )
-        }
-
-        override suspend fun getString(listener: CopyStreamListener?): String {
-            return build().getString(listener)
-        }
-
-        override suspend fun <T> get(parser: DataParser<T>, listener: CopyStreamListener?): T {
-            return build().get(parser, listener)
-        }
-
-        override suspend fun <T> getList(
-            parser: DataParser<T>,
-            listener: CopyStreamListener?
-        ): List<T> {
-            return build().getList(parser, listener)
-        }
-
-        override suspend fun download(file: File, listener: CopyStreamListener?) {
-            return build().download(file, listener)
-        }
-
-        override suspend fun downloadTo(outputStream: OutputStream, listener: CopyStreamListener?) {
-            return build().downloadTo(outputStream, listener)
-        }
-
-        override suspend fun downloadAll(listener: CopyStreamListener?): ByteArray {
-            return build().downloadAll(listener)
-        }
-
-        override suspend fun getHeaders(): Map<String, List<String>> {
-            return build().getHeaders()
+        return connection.inputStream.use {
+            it.readString(connection.contentEncoding)
+        }.also {
+            log("Response: $it")
         }
     }
 
@@ -159,9 +51,8 @@ object NetClient {
         val url = URL(request.fullUrl)
         val connection = url.openConnection() as HttpURLConnection
 
-        connection.requestMethod = request.method.name
+        connection.requestMethod = request.method.name.uppercase()
         connection.instanceFollowRedirects = true
-        connection.setRequestProperty(HttpHeaders.ACCEPT_CHARSET, "utf-8")
         request.modifier(connection)
         request.credentials?.prepareRequest(connection)
 
@@ -180,8 +71,15 @@ object NetClient {
 
         val responseCode = connection.responseCode
         log("Status: $responseCode")
+        request.responseHeaders?.let { headers ->
+            for ((key, values) in connection.headerFields.entries) {
+                if (key != null) {
+                    headers[key.lowercase()] = values.last()
+                }
+            }
+        }
         if (responseCode < 200 || responseCode >= 300) {
-            val contentStream = if (request.method == HttpMethod.HEAD) {
+            val contentStream = if (request.method == HttpMethod.Head) {
                 null
             } else {
                 try {
@@ -205,30 +103,19 @@ object NetClient {
                     }
                 }
             }
-            throw HttpStatusException(content, responseCode, connection.headerFields)
+            throw HttpStatusException(content, responseCode)
         }
         return connection
     }
 
-    private fun makeRequest(request: Request, uploadListener: CopyStreamListener?): String {
-        val connection = makeConnection(request, uploadListener)
-        if (request.method == HttpMethod.HEAD) {
-            return ""
-        }
-        return connection.inputStream.use {
-            it.readString(connection.contentEncoding)
-        }.also {
-            log("Response: $it")
-        }
-    }
 
     private fun writeContent(
         request: Request,
         connection: HttpURLConnection,
         uploadListener: CopyStreamListener? = null
     ) {
-        if (request.method == HttpMethod.HEAD || request.method == HttpMethod.DELETE ||
-            request.body == null || request.method === HttpMethod.GET
+        if (request.method == HttpMethod.Head || request.method == HttpMethod.Delete ||
+            request.body == null || request.method === HttpMethod.Get
         ) {
             return
         }
@@ -243,13 +130,12 @@ object NetClient {
         if (contentLength >= 0) {
             connection.setRequestProperty("Content-Length", contentLength.toString())
         }
+        log("Body: ${request.body}")
         if (uploadListener != null) {
             if (contentLength <= 0) {
                 error("Content length is missing. To listen upload progress, content length must be determined")
             }
             connection.setFixedLengthStreamingMode(contentLength)
-        } else {
-            log("Body: ${request.body.getContent().readString("UTF-8")}")
         }
         request.body.getContent().use { data ->
             DataOutputStream(connection.outputStream).use { writer ->

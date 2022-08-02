@@ -12,4 +12,6 @@ class FileBody(
     override fun getContent(): InputStream = file.inputStream()
 
     override fun length() = file.length()
+
+    override fun toString() = "File(${file.path})"
 }
