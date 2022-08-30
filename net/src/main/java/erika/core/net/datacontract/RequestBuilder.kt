@@ -1,23 +1,25 @@
 package erika.core.net.datacontract
 
+import android.net.Network
 import erika.core.net.CopyStreamListener
 import erika.core.net.Credentials
 import erika.core.net.HttpMethod
 import java.io.OutputStream
 
-class RequestBuilder(private val url: String) : NetworkService {
+open class RequestBuilder(val url: String) : NetworkService {
     private var method = HttpMethod.Get
     private var body: Body? = null
     private var params: String? = null
     private val headers = mutableListOf<Pair<String, String>>()
     private var credentials: Credentials? = null
     private var responseHeaders: MutableMap<String, String>? = null
+    private var network: Network? = null
 
     fun authorize(credentials: Credentials?) = apply {
         this.credentials = credentials
     }
 
-    fun body(body: Body) = apply {
+    fun body(body: Body?) = apply {
         this.body = body
     }
 
@@ -61,6 +63,10 @@ class RequestBuilder(private val url: String) : NetworkService {
         responseHeaders = headers
     }
 
+    fun setNetwork(network: Network?) = apply {
+        this.network = network
+    }
+
     fun build() = Request(
         url = url,
         method = method,
@@ -69,6 +75,7 @@ class RequestBuilder(private val url: String) : NetworkService {
         headers = headers,
         credentials = credentials,
         responseHeaders = responseHeaders,
+        network = network,
     )
 
     override suspend fun getString(listener: CopyStreamListener?): String {

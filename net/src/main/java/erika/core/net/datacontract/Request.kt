@@ -1,5 +1,6 @@
 package erika.core.net.datacontract
 
+import android.net.Network
 import erika.core.net.CopyStreamListener
 import erika.core.net.Credentials
 import erika.core.net.HttpMethod
@@ -15,6 +16,7 @@ class Request(
     val credentials: Credentials? = null,
     val modifier: HttpURLConnection.() -> Unit = { },
     val responseHeaders: MutableMap<String, String>? = null,
+    val network: Network? = null,
 ) : NetworkService {
     val fullUrl: String
         get() {

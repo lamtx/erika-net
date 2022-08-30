@@ -6,7 +6,7 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 
-object ISO0861DateParser {
+object ISO8601DateParser {
     private val utc = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
@@ -47,11 +47,11 @@ object ISO0861DateParser {
         }
     }
 
-    fun format(date: Date?): String? {
-        return if (date == null) null else utc.format(date)
+    fun format(date: Date): String {
+        return utc.format(date)
     }
 
-    fun formatLocal(date: Date?): String? {
-        return if (date == null) null else local.format(date)
+    fun formatLocal(date: Date): String {
+        return local.format(date)
     }
 }

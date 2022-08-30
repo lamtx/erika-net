@@ -15,7 +15,7 @@ class ParameterBuilder(
 
     infix fun String.set(value: Date?) {
         if (value != null) {
-            properties.put(this, ISO0861DateParser.format(value))
+            properties.put(this, ISO8601DateParser.format(value))
         }
     }
 
@@ -219,7 +219,7 @@ class ParameterBuilder(
         }
         when (value) {
             is JsonObject -> return value.toJson()
-            is Date -> return ISO0861DateParser.format(value)
+            is Date -> return ISO8601DateParser.format(value)
             is Iterable<*> -> {
                 if (value.isEmpty()) {
                     return null

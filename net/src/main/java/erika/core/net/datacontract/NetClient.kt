@@ -23,7 +23,7 @@ object NetClient {
     suspend fun downloadTo(
         request: Request,
         outputStream: OutputStream,
-        listener: CopyStreamListener?
+        listener: CopyStreamListener?,
     ) {
         return withContext(Dispatchers.IO) {
             val connection = makeConnection(request, null)
@@ -49,7 +49,8 @@ object NetClient {
 
     private fun makeConnection(request: Request, listener: CopyStreamListener?): HttpURLConnection {
         val url = URL(request.fullUrl)
-        val connection = url.openConnection() as HttpURLConnection
+        val connection =
+            (request.network?.openConnection(url) ?: url.openConnection()) as HttpURLConnection
 
         connection.requestMethod = request.method.name.uppercase()
         connection.instanceFollowRedirects = true
@@ -108,11 +109,10 @@ object NetClient {
         return connection
     }
 
-
     private fun writeContent(
         request: Request,
         connection: HttpURLConnection,
-        uploadListener: CopyStreamListener? = null
+        uploadListener: CopyStreamListener? = null,
     ) {
         if (request.method == HttpMethod.Head || request.method == HttpMethod.Delete ||
             request.body == null || request.method === HttpMethod.Get

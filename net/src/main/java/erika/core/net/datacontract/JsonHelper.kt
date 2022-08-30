@@ -7,8 +7,7 @@ import java.text.ParseException
 import java.util.*
 import kotlin.reflect.KClass
 
-@JvmInline
-value class JsonHelper(private val json: JSONObject) {
+class JsonHelper(private val json: JSONObject) {
 
     fun required(name: String): Nothing {
         throw RequiredFieldException(name)
@@ -151,7 +150,7 @@ value class JsonHelper(private val json: JSONObject) {
 
     fun readDate(name: String): Date? {
         return try {
-            ISO0861DateParser.parse(readNullableString(name))
+            ISO8601DateParser.parse(readNullableString(name))
         } catch (e: ParseException) {
             null
         }
