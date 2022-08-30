@@ -4,6 +4,8 @@ import android.webkit.MimeTypeMap
 import erika.core.net.ContentType
 import erika.core.net.CopyStreamListener
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.isActive
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -13,17 +15,22 @@ import java.net.URLEncoder
 
 fun InputStream.readString(encoding: String?) = readBytes().toString(charset(encoding ?: "UTF8"))
 
-fun InputStream.copyTo(out: OutputStream, estimatedSize: Long, listener: CopyStreamListener?) {
+fun CoroutineScope.copyStream(
+    input: InputStream,
+    out: OutputStream,
+    estimatedSize: Long,
+    listener: CopyStreamListener?,
+) {
     val buffer = ByteArray(8024)
     var len: Int
     var current = 0L
     while (true) {
-        len = read(buffer)
+        len = input.read(buffer)
         if (len <= 0) {
             break
         }
         current += len
-        if (listener != null && listener(current, estimatedSize, false)) {
+        if (!isActive || (listener != null && listener(current, estimatedSize, false))) {
             throw CancellationException()
         }
         out.write(buffer, 0, len)

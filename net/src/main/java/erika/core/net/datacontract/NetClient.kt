@@ -4,6 +4,7 @@ import android.util.Log
 import erika.core.net.CopyStreamListener
 import erika.core.net.HttpMethod
 import erika.core.net.HttpStatusException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.DataOutputStream
@@ -30,12 +31,15 @@ object NetClient {
             val estimatedSize = connection.getHeaderField("Content-length")?.toLongOrNull()
                 ?: -1
             connection.inputStream.use { ins ->
-                ins.copyTo(outputStream, estimatedSize, listener)
+                copyStream(ins, outputStream, estimatedSize, listener)
             }
         }
     }
 
-    private fun makeRequest(request: Request, uploadListener: CopyStreamListener?): String {
+    private fun CoroutineScope.makeRequest(
+        request: Request,
+        uploadListener: CopyStreamListener?,
+    ): String {
         val connection = makeConnection(request, uploadListener)
         if (request.method == HttpMethod.Head) {
             return ""
@@ -47,7 +51,10 @@ object NetClient {
         }
     }
 
-    private fun makeConnection(request: Request, listener: CopyStreamListener?): HttpURLConnection {
+    private fun CoroutineScope.makeConnection(
+        request: Request,
+        listener: CopyStreamListener?,
+    ): HttpURLConnection {
         val url = URL(request.fullUrl)
         val connection =
             (request.network?.openConnection(url) ?: url.openConnection()) as HttpURLConnection
@@ -68,7 +75,15 @@ object NetClient {
         log("Credentials: ${request.credentials}")
         log("Headers: ${request.headers}")
 
-        writeContent(request, connection, listener)
+        try {
+            writeContent(request, connection, listener)
+        } catch (e: Throwable) {
+            try {
+                connection.disconnect()
+            } catch (_: Exception) {
+            }
+            throw e
+        }
 
         val responseCode = connection.responseCode
         log("Status: $responseCode")
@@ -100,7 +115,7 @@ object NetClient {
                 } finally {
                     try {
                         contentStream.close()
-                    } catch (ignored: IOException) {
+                    } catch (_: IOException) {
                     }
                 }
             }
@@ -109,7 +124,7 @@ object NetClient {
         return connection
     }
 
-    private fun writeContent(
+    private fun CoroutineScope.writeContent(
         request: Request,
         connection: HttpURLConnection,
         uploadListener: CopyStreamListener? = null,
@@ -139,7 +154,7 @@ object NetClient {
         }
         request.body.getContent().use { data ->
             DataOutputStream(connection.outputStream).use { writer ->
-                data.copyTo(writer, contentLength, uploadListener)
+                copyStream(data, writer, contentLength, uploadListener)
             }
         }
     }

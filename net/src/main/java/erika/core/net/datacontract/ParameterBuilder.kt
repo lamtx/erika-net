@@ -6,7 +6,7 @@ import java.util.*
 
 @ParameterMarker
 class ParameterBuilder(
-    private val properties: JSONObject = JSONObject()
+    private val properties: JSONObject = JSONObject(),
 ) {
 
     infix fun String.set(value: EmptyString) {
