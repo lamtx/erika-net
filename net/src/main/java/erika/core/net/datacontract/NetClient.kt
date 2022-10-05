@@ -31,7 +31,7 @@ object NetClient {
             val estimatedSize = connection.getHeaderField("Content-length")?.toLongOrNull()
                 ?: -1
             connection.inputStream.use { ins ->
-                copyStream(ins, outputStream, estimatedSize, listener)
+                ins.copyTo(outputStream, estimatedSize, listener)
             }
         }
     }
@@ -154,7 +154,7 @@ object NetClient {
         }
         request.body.getContent().use { data ->
             DataOutputStream(connection.outputStream).use { writer ->
-                copyStream(data, writer, contentLength, uploadListener)
+                data.copyTo(writer, contentLength, uploadListener)
             }
         }
     }

@@ -15,6 +15,9 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
     }
+    kotlinOptions {
+        freeCompilerArgs += "-Xcontext-receivers"
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -39,7 +42,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.github.lamtx'
                 artifactId = 'erika-net'
-                version = '1.1.4'
+                version = '1.1.5'
             }
         }
     }

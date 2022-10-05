@@ -15,8 +15,14 @@ import java.net.URLEncoder
 
 fun InputStream.readString(encoding: String?) = readBytes().toString(charset(encoding ?: "UTF8"))
 
-fun CoroutineScope.copyStream(
-    input: InputStream,
+fun CoroutineScope.throwsIfCancelled() {
+    if (!isActive) {
+        throw CancellationException()
+    }
+}
+
+context(CoroutineScope)
+fun InputStream.copyTo(
     out: OutputStream,
     estimatedSize: Long,
     listener: CopyStreamListener?,
@@ -25,14 +31,13 @@ fun CoroutineScope.copyStream(
     var len: Int
     var current = 0L
     while (true) {
-        len = input.read(buffer)
+        len = read(buffer)
         if (len <= 0) {
             break
         }
+        throwsIfCancelled()
         current += len
-        if (!isActive || (listener != null && listener(current, estimatedSize, false))) {
-            throw CancellationException()
-        }
+        listener?.invoke(current, estimatedSize, false)
         out.write(buffer, 0, len)
         if (listener != null) {
             out.flush()
