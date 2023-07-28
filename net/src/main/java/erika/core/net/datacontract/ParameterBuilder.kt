@@ -1,5 +1,6 @@
 package erika.core.net.datacontract
 
+import kotlinx.datetime.Instant
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.*
@@ -16,6 +17,12 @@ class ParameterBuilder(
     infix fun String.set(value: Date?) {
         if (value != null) {
             properties.put(this, ISO8601DateParser.format(value))
+        }
+    }
+
+    infix fun String.set(value: Instant?) {
+        if (value != null) {
+            properties.put(this, value.toString())
         }
     }
 
@@ -232,6 +239,7 @@ class ParameterBuilder(
                 }
                 return array
             }
+
             is Map<*, *> -> {
                 if (value.isEmpty()) {
                     return null
@@ -247,6 +255,7 @@ class ParameterBuilder(
                 }
                 return result
             }
+
             is Null -> return JSONObject.NULL
             else -> error("Unsupported Json type ${value.javaClass.name}")
         }
