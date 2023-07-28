@@ -31,11 +31,11 @@ class Request(
             }
         }
 
-    override suspend fun getString(listener: CopyStreamListener?): String {
-        return NetClient.getString(this, listener)
-    }
-
-    override suspend fun downloadTo(outputStream: OutputStream, listener: CopyStreamListener?) {
-        return NetClient.downloadTo(this, outputStream, listener)
+    override suspend fun <T : OutputStream> download(
+        outputFactory: (HttpURLConnection) -> T,
+        listener: CopyStreamListener?,
+        uploadListener: CopyStreamListener?,
+    ): T {
+        return NetClient.download(this, outputFactory, listener, uploadListener)
     }
 }

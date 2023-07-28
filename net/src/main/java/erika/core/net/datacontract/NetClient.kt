@@ -15,39 +15,21 @@ import java.net.URL
 
 object NetClient {
     private const val tag = "NetClient"
-    suspend fun getString(request: Request, listener: CopyStreamListener?): String {
-        return withContext(Dispatchers.IO) {
-            makeRequest(request, listener)
-        }
-    }
 
-    suspend fun downloadTo(
+    suspend fun <T : OutputStream> download(
         request: Request,
-        outputStream: OutputStream,
+        outputFactory: (HttpURLConnection) -> T,
         listener: CopyStreamListener?,
-    ) {
-        return withContext(Dispatchers.IO) {
-            val connection = makeConnection(request, null)
-            val estimatedSize = connection.getHeaderField("Content-length")?.toLongOrNull()
-                ?: -1
-            connection.inputStream.use { ins ->
-                ins.copyTo(outputStream, estimatedSize, listener)
-            }
-        }
-    }
-
-    private fun CoroutineScope.makeRequest(
-        request: Request,
         uploadListener: CopyStreamListener?,
-    ): String {
-        val connection = makeConnection(request, uploadListener)
-        if (request.method == HttpMethod.Head) {
-            return ""
-        }
-        return connection.inputStream.use {
-            it.readString(connection.contentEncoding)
-        }.also {
-            log("Response: $it")
+    ): T {
+        return withContext(Dispatchers.IO) {
+            val connection = makeConnection(request, uploadListener)
+            val contentLength = connection.contentLengthCompat
+            connection.inputStream.use { input ->
+                outputFactory(connection).also { output ->
+                    input.copyTo(output, contentLength, listener)
+                }
+            }
         }
     }
 
@@ -94,7 +76,7 @@ object NetClient {
                 }
             }
         }
-        if (responseCode < 200 || responseCode >= 300) {
+        if (responseCode != 200) {
             val contentStream = if (request.method == HttpMethod.Head) {
                 null
             } else {

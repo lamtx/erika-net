@@ -1,5 +1,6 @@
 package erika.core.net.datacontract
 
+import kotlinx.datetime.Instant
 import org.json.JSONArray
 import org.json.JSONObject
 import org.json.JSONTokener
@@ -156,6 +157,16 @@ class JsonHelper(private val json: JSONObject) {
         }
     }
 
+
+    fun readTime(name: String): Instant? {
+        val iso = readNullableString(name) ?: return null
+        return try {
+            Instant.parse(iso)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    }
+
     /**
      * Length of list may be less than the original
      * Null will be removed from the list.
@@ -238,6 +249,7 @@ class JsonHelper(private val json: JSONObject) {
                         null
                     }
                 }
+
                 else -> null
             }
         }

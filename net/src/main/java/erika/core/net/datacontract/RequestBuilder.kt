@@ -5,6 +5,7 @@ import erika.core.net.CopyStreamListener
 import erika.core.net.Credentials
 import erika.core.net.HttpMethod
 import java.io.OutputStream
+import java.net.HttpURLConnection
 
 open class RequestBuilder(val url: String) : NetworkService {
     private var method = HttpMethod.Get
@@ -47,7 +48,7 @@ open class RequestBuilder(val url: String) : NetworkService {
         this.params = params
     }
 
-    inline fun params(p: ParameterCreator) = apply {
+    fun params(p: ParameterCreator) = apply {
         params(p.toJson().toUrlEncoded())
     }
 
@@ -78,11 +79,11 @@ open class RequestBuilder(val url: String) : NetworkService {
         network = network,
     )
 
-    override suspend fun getString(listener: CopyStreamListener?): String {
-        return NetClient.getString(build(), listener)
-    }
-
-    override suspend fun downloadTo(outputStream: OutputStream, listener: CopyStreamListener?) {
-        return NetClient.downloadTo(build(), outputStream, listener)
+    override suspend fun <T : OutputStream> download(
+        outputFactory: (HttpURLConnection) -> T,
+        listener: CopyStreamListener?,
+        uploadListener: CopyStreamListener?,
+    ): T {
+        return NetClient.download(build(), outputFactory, listener, uploadListener)
     }
 }

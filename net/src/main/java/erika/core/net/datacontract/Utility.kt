@@ -1,5 +1,6 @@
 package erika.core.net.datacontract
 
+import android.os.Build
 import android.webkit.MimeTypeMap
 import erika.core.net.ContentType
 import erika.core.net.CopyStreamListener
@@ -11,6 +12,7 @@ import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.HttpURLConnection
 import java.net.URLEncoder
 
 fun InputStream.readString(encoding: String?) = readBytes().toString(charset(encoding ?: "UTF8"))
@@ -27,7 +29,12 @@ fun InputStream.copyTo(
     estimatedSize: Long,
     listener: CopyStreamListener?,
 ) {
-    val buffer = ByteArray(8024)
+    val bufferSize = if (estimatedSize <= 0) {
+        DEFAULT_BUFFER_SIZE
+    } else {
+        estimatedSize.coerceAtMost(DEFAULT_BUFFER_SIZE * 4L).toInt()
+    }
+    val buffer = ByteArray(bufferSize)
     var len: Int
     var current = 0L
     while (true) {
@@ -85,3 +92,24 @@ fun File.getMimeType(): ContentType? {
         }
     }
 }
+
+val HttpURLConnection.contentLengthCompat: Long
+    get() {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            contentLengthLong
+        } else {
+            getHeaderField("content-length")?.toLongOrNull() ?: -1L
+        }
+    }
+
+val HttpURLConnection.charset: String?
+    get() {
+        val contentType = contentType ?: return null
+        for (s in contentType.split(";")) {
+            val value = s.trim().lowercase()
+            if (value.startsWith("charset=")) {
+                return value.substring(8) // length of charset=
+            }
+        }
+        return null
+    }

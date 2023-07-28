@@ -3,7 +3,11 @@ package erika.core.net.datacontract
 import org.json.JSONArray
 import org.json.JSONObject
 
-@Deprecated("Use [JsonObject]", replaceWith = ReplaceWith("JsonObject"))
+@Deprecated(
+    "Use [JsonObject]",
+    replaceWith = ReplaceWith("JsonObject"),
+    level = DeprecationLevel.HIDDEN
+)
 interface Parameter : JsonObject {
 
     fun parameterCreator(t: Creator)
