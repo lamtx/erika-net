@@ -76,7 +76,7 @@ object NetClient {
                 }
             }
         }
-        if (responseCode != 200) {
+        if (responseCode != 200 && responseCode != 206) {
             val contentStream = if (request.method == HttpMethod.Head) {
                 null
             } else {

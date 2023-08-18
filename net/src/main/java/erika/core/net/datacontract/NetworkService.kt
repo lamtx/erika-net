@@ -71,7 +71,7 @@ interface NetworkService {
 
     suspend fun download(file: File, listener: CopyStreamListener? = null) {
         file.outputStream().use { out ->
-            downloadTo(out, listener)
+            downloadTo(out, listener = listener)
         }
     }
 
