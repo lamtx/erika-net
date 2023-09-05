@@ -13,7 +13,6 @@ open class RequestBuilder(val url: String) : NetworkService {
     private var params: String? = null
     private val headers = mutableListOf<Pair<String, String>>()
     private var credentials: Credentials? = null
-    private var responseHeaders: MutableMap<String, String>? = null
     private var network: Network? = null
 
     fun authorize(credentials: Credentials?) = apply {
@@ -60,10 +59,6 @@ open class RequestBuilder(val url: String) : NetworkService {
         h(HeaderBuilder(headers))
     }
 
-    fun responseHeaders(headers: MutableMap<String, String>) = apply {
-        responseHeaders = headers
-    }
-
     fun setNetwork(network: Network?) = apply {
         this.network = network
     }
@@ -75,7 +70,6 @@ open class RequestBuilder(val url: String) : NetworkService {
         params = params,
         headers = headers,
         credentials = credentials,
-        responseHeaders = responseHeaders,
         network = network,
     )
 

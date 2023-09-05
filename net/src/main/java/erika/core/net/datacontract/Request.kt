@@ -7,7 +7,7 @@ import erika.core.net.HttpMethod
 import java.io.OutputStream
 import java.net.HttpURLConnection
 
-class Request(
+data class Request(
     val url: String,
     val method: HttpMethod = HttpMethod.Get,
     val body: Body? = null,
@@ -15,7 +15,6 @@ class Request(
     val headers: List<Pair<String, String>> = emptyList(),
     val credentials: Credentials? = null,
     val modifier: HttpURLConnection.() -> Unit = { },
-    val responseHeaders: MutableMap<String, String>? = null,
     val network: Network? = null,
 ) : NetworkService {
     val fullUrl: String

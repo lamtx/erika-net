@@ -18,70 +18,9 @@ interface NetworkService {
         uploadListener: CopyStreamListener? = null,
     ): T
 
-    suspend fun getString(uploadListener: CopyStreamListener? = null): String {
-        var charset: String? = null
-        val stream = download(
-            { connection ->
-                val contentLength = connection.contentLength
-                charset = connection.charset
-                ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, contentLength))
-            },
-            null,
-            uploadListener
-        )
-        val bytes = stream.toByteArray()
-        return String(bytes, Charset.forName(charset ?: "utf-8"))
-    }
-
-    suspend fun downloadTo(
-        outputStream: OutputStream,
-        listener: CopyStreamListener? = null,
-        uploadListener: CopyStreamListener? = null,
-    ) {
-        download({ outputStream }, listener, uploadListener)
-    }
-
-    suspend fun <T> get(
-        parser: DataParser<T>,
-        uploadListener: CopyStreamListener? = null
-    ): T {
-        return parser.parseObject(getString(uploadListener))
-    }
-
-    suspend fun <T> getList(
-        parser: DataParser<T>,
-        uploadListener: CopyStreamListener? = null
-    ): List<T> {
-        return parser.parseList(getString(uploadListener))
-    }
-
-    suspend fun downloadAll(
-        listener: CopyStreamListener? = null,
-        uploadListener: CopyStreamListener? = null,
-    ): ByteArray {
-        return download(
-            { connection ->
-                val contentLength = connection.contentLength
-                ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, contentLength))
-            },
-            listener,
-            uploadListener,
-        ).toByteArray()
-    }
-
-    suspend fun download(file: File, listener: CopyStreamListener? = null) {
-        file.outputStream().use { out ->
-            downloadTo(out, listener = listener)
-        }
-    }
-
-    suspend fun <T> get(serializer: DeserializationStrategy<T>): T {
-        return json.decodeFromString(serializer, getString())
-    }
-
     companion object {
         @OptIn(ExperimentalSerializationApi::class)
-        val json by lazy {
+        val Json by lazy {
             Json {
                 ignoreUnknownKeys = true
                 coerceInputValues = true
@@ -90,3 +29,99 @@ interface NetworkService {
         }
     }
 }
+
+suspend inline fun NetworkService.getString(
+    noinline uploadListener: CopyStreamListener? = null,
+): String = getString(null, uploadListener)
+
+suspend fun NetworkService.getString(
+    response: HttpHeadersResponse?,
+    uploadListener: CopyStreamListener? = null
+): String {
+    var charset: String? = null
+    val stream = download(
+        { connection ->
+            response?.set(connection)
+            val contentLength = connection.contentLength
+            charset = connection.charset
+            ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, contentLength))
+        },
+        null,
+        uploadListener
+    )
+    val bytes = stream.toByteArray()
+    return String(bytes, Charset.forName(charset ?: "utf-8"))
+}
+
+suspend fun NetworkService.downloadTo(
+    outputStream: OutputStream,
+    listener: CopyStreamListener? = null,
+    uploadListener: CopyStreamListener? = null,
+) {
+    download({ outputStream }, listener, uploadListener)
+}
+
+suspend inline fun <T> NetworkService.get(
+    noinline parser: DataParser<T>,
+    noinline uploadListener: CopyStreamListener? = null
+): T = get(parser, null, uploadListener)
+
+suspend fun <T> NetworkService.get(
+    parser: DataParser<T>,
+    response: HttpHeadersResponse?,
+    uploadListener: CopyStreamListener? = null
+): T {
+    return parser.parseObject(getString(response, uploadListener))
+}
+
+suspend inline fun <T> NetworkService.getList(
+    noinline parser: DataParser<T>,
+    noinline uploadListener: CopyStreamListener? = null
+): List<T> = getList(parser, null, uploadListener)
+
+suspend fun <T> NetworkService.getList(
+    parser: DataParser<T>,
+    response: HttpHeadersResponse?,
+    uploadListener: CopyStreamListener? = null
+): List<T> {
+    return parser.parseList(getString(response, uploadListener))
+}
+
+suspend inline fun <T> NetworkService.get(
+    serializer: DeserializationStrategy<T>
+): T = get(null, serializer)
+
+suspend fun <T> NetworkService.get(
+    response: HttpHeadersResponse?,
+    serializer: DeserializationStrategy<T>
+): T {
+    return NetworkService.Json.decodeFromString(serializer, getString(response))
+}
+
+suspend inline fun NetworkService.getBytes(
+    noinline listener: CopyStreamListener? = null,
+    noinline uploadListener: CopyStreamListener? = null,
+): ByteArray = getBytes(null, listener, uploadListener)
+
+suspend fun NetworkService.getBytes(
+    response: HttpHeadersResponse?,
+    listener: CopyStreamListener? = null,
+    uploadListener: CopyStreamListener? = null,
+): ByteArray {
+    return download(
+        { connection ->
+            response?.set(connection)
+            val contentLength = connection.contentLength
+            ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, contentLength))
+        },
+        listener,
+        uploadListener,
+    ).toByteArray()
+}
+
+suspend fun NetworkService.downloadTo(file: File, listener: CopyStreamListener? = null) {
+    file.outputStream().use { out ->
+        downloadTo(out, listener = listener)
+    }
+}
+

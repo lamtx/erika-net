@@ -69,13 +69,7 @@ object NetClient {
 
         val responseCode = connection.responseCode
         log("Status: $responseCode")
-        request.responseHeaders?.let { headers ->
-            for ((key, values) in connection.headerFields.entries) {
-                if (key != null) {
-                    headers[key.lowercase()] = values.last()
-                }
-            }
-        }
+
         if (responseCode != 200 && responseCode != 206) {
             val contentStream = if (request.method == HttpMethod.Head) {
                 null
