@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    compileSdkVersion 34
+    compileSdk 34
     namespace 'erika.core.net'
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 34
+        minSdk 21
+        targetSdk 34
         versionCode 1
-        versionName "1.1.9"
+        versionName "1.1.10"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -32,16 +32,19 @@ android {
     }
     publishing {
         singleVariant("release") {
-            // if you don't want sources/javadoc, remove these lines
             withSourcesJar()
+        }
+        multipleVariants {
+            allVariants()
             withJavadocJar()
+            withSourcesJar()
         }
     }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.4.0"
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1'
     testImplementation 'junit:junit:4.13.2'
@@ -55,7 +58,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.github.lamtx'
                 artifactId = 'erika-net'
-                version = '1.1.9'
+                version = '1.1.10'
             }
         }
     }
