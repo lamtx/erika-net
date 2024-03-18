@@ -60,6 +60,7 @@ object NetClient {
         try {
             writeContent(request, connection, listener)
         } catch (e: Throwable) {
+            log("write content failed: $e")
             try {
                 connection.disconnect()
             } catch (_: Exception) {
@@ -67,7 +68,16 @@ object NetClient {
             throw e
         }
 
-        val responseCode = connection.responseCode
+        val responseCode = try {
+            connection.responseCode
+        } catch (e: Throwable) {
+            log("make connection failed: $e")
+            try {
+                connection.disconnect()
+            } catch (_: Exception) {
+            }
+            throw e
+        }
         log("Status: $responseCode")
 
         if (responseCode != 200 && responseCode != 206) {

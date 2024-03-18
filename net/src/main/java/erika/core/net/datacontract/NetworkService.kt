@@ -1,5 +1,6 @@
 package erika.core.net.datacontract
 
+import android.util.Log
 import erika.core.net.CopyStreamListener
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -50,7 +51,9 @@ suspend fun NetworkService.getString(
         uploadListener
     )
     val bytes = stream.toByteArray()
-    return String(bytes, Charset.forName(charset ?: "utf-8"))
+    val s = String(bytes, Charset.forName(charset ?: "utf-8"))
+    Log.d("NetClient", "Response: $s")
+    return s
 }
 
 suspend fun NetworkService.downloadTo(
