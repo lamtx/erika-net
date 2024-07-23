@@ -15,7 +15,13 @@ import java.io.OutputStream
 import java.net.HttpURLConnection
 import java.net.URLEncoder
 
-fun InputStream.readString(encoding: String?) = readBytes().toString(charset(encoding ?: "UTF8"))
+internal const val KB = 1024L
+internal const val MB = 1024L * KB
+internal const val MAX_BUFFER_SIZE = 10 * MB
+
+internal fun InputStream.readString(encoding: String?): String {
+    return readBytes().toString(charset(encoding ?: "UTF8"))
+}
 
 fun CoroutineScope.throwsIfCancelled() {
     if (!isActive) {
