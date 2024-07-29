@@ -43,12 +43,16 @@ suspend fun NetworkService.getString(
     val stream = download(
         { connection ->
             response?.set(connection)
-            val contentLength = connection.contentLength
-            if (contentLength > MAX_BUFFER_SIZE) {
-                throw IllegalStateException("Too large to create buffer: max=$MAX_BUFFER_SIZE, actual=$contentLength")
-            }
             charset = connection.charset
-            ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, contentLength))
+            if (connection.requestMethod == "HEAD") {
+                ByteArrayOutputStream()
+            } else {
+                val contentLength = connection.contentLength
+                if (contentLength > MAX_BUFFER_SIZE) {
+                    throw IllegalStateException("Too large to create buffer: max=$MAX_BUFFER_SIZE, actual=$contentLength")
+                }
+                ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, contentLength))
+            }
         },
         null,
         uploadListener
