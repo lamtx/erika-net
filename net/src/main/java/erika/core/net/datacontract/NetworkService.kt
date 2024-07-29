@@ -45,22 +45,22 @@ suspend fun NetworkService.getString(
             response?.set(connection)
             charset = connection.charset
             if (connection.requestMethod == "HEAD") {
-                ByteArrayOutputStream()
+                ExposingBufferByteArrayOutputStream(0)
             } else {
                 val contentLength = connection.contentLength
                 if (contentLength > MAX_BUFFER_SIZE) {
                     throw IllegalStateException("Too large to create buffer: max=$MAX_BUFFER_SIZE, actual=$contentLength")
                 }
-                ByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, contentLength))
+                ExposingBufferByteArrayOutputStream(maxOf(DEFAULT_BUFFER_SIZE, contentLength))
             }
         },
         null,
         uploadListener
     )
-    val bytes = stream.toByteArray()
-    val s = String(bytes, Charset.forName(charset ?: "utf-8"))
-    Log.d("NetClient", "Response: $s")
-    return s
+    val cs = if (charset == null) Charsets.UTF_8 else Charset.forName(charset)
+    return String(stream.buffer, 0, stream.size(), cs).also {
+        Log.d("NetClient", "Response: $it")
+    }
 }
 
 suspend fun NetworkService.downloadTo(
