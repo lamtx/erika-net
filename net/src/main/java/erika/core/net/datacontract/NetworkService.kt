@@ -108,6 +108,10 @@ suspend fun <T> NetworkService.get(
     return NetworkService.Json.decodeFromString(serializer, getString(response))
 }
 
+suspend inline fun <T> NetworkService.getList(
+    parser: DeserializationStrategy<T>,
+): List<T> = getList(parser, null)
+
 suspend inline fun NetworkService.getBytes(
     noinline listener: CopyStreamListener? = null,
     noinline uploadListener: CopyStreamListener? = null,
